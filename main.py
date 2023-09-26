@@ -3,6 +3,7 @@ import time
 import cv2
 import pyrealsense2 as rs
 from wrist_marker_filter import markerFilter as mf
+from moving_average import MovingAverageAngle as ma
 
 
 def click_event(event, x, y, flags, param):
@@ -26,6 +27,8 @@ config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 pipeline.start(config)
 init = True
 img_init = True
+
+angle_averager = ma(window_size=20)
 
 
 try:
@@ -98,8 +101,9 @@ try:
             cv2.imshow('Robot Tip Locator', img_gray)
             init = False
         if none_zero_points is not None:
-            bend_angle = -(90 - alpha)
-            coordinates_text = f"theta={bend_angle}"
+            bend_angle = (-(90 - alpha))
+            average_bend_angle = round(angle_averager.add_angle(bend_angle), 2)
+            coordinates_text = f"theta={average_bend_angle}"
             cv2.circle(img_gray, (int(xr), int(yr)), 10, (255, 255, 255), 1)
             cv2.circle(img_gray, (int(xg), int(yg)), 10, (255, 255, 255), 1)
             cv2.line(img_gray, (int(xr), int(yr)), (int(xg), int(yg)), (255,0,0), 1)
