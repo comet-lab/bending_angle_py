@@ -4,6 +4,7 @@ import cv2
 import pyrealsense2 as rs
 from wrist_marker_filter import markerFilter as mf
 from moving_average import MovingAverageAngle as ma
+from low_pass_filter import LowPassFilter as lpf
 
 
 def click_event(event, x, y, flags, param):
@@ -28,7 +29,8 @@ pipeline.start(config)
 init = True
 img_init = True
 
-angle_averager = ma(window_size=20)
+angle_averager = ma(window_size=15)
+lp = lpf(alpha=0.075)
 
 
 try:
@@ -103,7 +105,9 @@ try:
         if none_zero_points is not None:
             bend_angle = (-(90 - alpha))
             average_bend_angle = round(angle_averager.add_angle(bend_angle), 2)
-            coordinates_text = f"theta={average_bend_angle}"
+            lpf_bend_angle = round(lp.add_angle(bend_angle), 2)
+            # bendangle = lpf_bend_angle
+            coordinates_text = f"theta={lpf_bend_angle}"
             cv2.circle(img_gray, (int(xr), int(yr)), 10, (255, 255, 255), 1)
             cv2.circle(img_gray, (int(xg), int(yg)), 10, (255, 255, 255), 1)
             cv2.line(img_gray, (int(xr), int(yr)), (int(xg), int(yg)), (255,0,0), 1)
